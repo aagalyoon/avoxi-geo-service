@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Geo Service</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .result {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .presets {
+            margin-top: 1rem;
+        }
+        
+        .preset-btn {
+            background-color: #6c757d;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .preset-btn:hover {
+            background-color: #545b62;
+        }
+        
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IP Geo Service</h1>
+        
+        <div class="info">
+            <strong>Demo Mode:</strong> Test IP validation against allowed countries. 
+            In demo mode, sample IPs are mapped to specific countries for testing.
+        </div>
+        
+        <form id="validationForm">
+            <div class="form-group">
+                <label for="ipAddress">IP Address</label>
+                <input type="text" id="ipAddress" name="ipAddress" placeholder="e.g., 8.8.8.8" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="countries">Allowed Countries (comma-separated country codes)</label>
+                <input type="text" id="countries" name="countries" placeholder="e.g., US,CA,GB" required>
+            </div>
+            
+            <button type="submit">Validate IP</button>
+            
+            <div class="presets">
+                <button type="button" class="preset-btn" onclick="setPreset('8.8.8.8', 'US,CA')">US IP → US,CA</button>
+                <button type="button" class="preset-btn" onclick="setPreset('134.195.196.1', 'GB,FR')">GB IP → GB,FR</button>
+                <button type="button" class="preset-btn" onclick="setPreset('1.1.1.1', 'AU,NZ')">AU IP → AU,NZ</button>
+                <button type="button" class="preset-btn" onclick="setPreset('200.148.32.1', 'BR')">BR IP → BR</button>
+            </div>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+    
+    <script>
+        function setPreset(ip, countries) {
+            document.getElementById('ipAddress').value = ip;
+            document.getElementById('countries').value = countries;
+        }
+        
+        document.getElementById('validationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const ipAddress = document.getElementById('ipAddress').value;
+            const countries = document.getElementById('countries').value.split(',').map(c => c.trim().toUpperCase());
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/v1/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ip: ipAddress,
+                        allowed_countries: countries
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = data.allowed ? 'result success' : 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>${data.allowed ? '✓ Allowed' : '✗ Blocked'}</strong><br>
+                        IP: ${data.ip}<br>
+                        Country: ${data.country || 'Unknown'}<br>
+                        Allowed Countries: ${countries.join(', ')}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>Error:</strong> ${data.error || 'Request failed'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            }
+            
+            resultDiv.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

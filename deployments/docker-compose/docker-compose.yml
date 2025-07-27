@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  geo-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      - HTTP_PORT=8080
+      - GRPC_PORT=9090
+      - LOG_LEVEL=info
+      - DEMO_MODE=true
+      - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY:-}
+    volumes:
+      - geo-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  geo-data:

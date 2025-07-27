@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geo-service
+  labels:
+    app: geo-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: geo-service
+  template:
+    metadata:
+      labels:
+        app: geo-service
+    spec:
+      containers:
+      - name: geo-service
+        image: geo-service:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: grpc
+        env:
+        - name: HTTP_PORT
+          value: "8080"
+        - name: GRPC_PORT
+          value: "9090"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: DEMO_MODE
+          value: "false"
+        - name: MAXMIND_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: geo-service-secrets
+              key: maxmind-license-key
+              optional: true
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: geo-service
+spec:
+  selector:
+    app: geo-service
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  - port: 9090
+    targetPort: 9090
+    name: grpc
+  type: LoadBalancer

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/geo-service/pkg/proto";
+
+// GeoService provides IP geolocation validation
+service GeoService {
+  // ValidateIP checks if an IP address is from an allowed country
+  rpc ValidateIP(ValidateRequest) returns (ValidateResponse);
+}
+
+// ValidateRequest contains the IP and allowed countries
+message ValidateRequest {
+  string ip = 1;
+  repeated string allowed_countries = 2;
+}
+
+// ValidateResponse contains the validation result
+message ValidateResponse {
+  bool allowed = 1;
+  string country = 2;
+  string ip = 3;
+}

@@ -1,0 +1,39 @@
+# Git files
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# IDE files
+.idea/
+.vscode/
+
+# Build artifacts
+geo-service
+dist/
+build/
+
+# Test files
+*_test.go
+testdata/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# MacOS files
+.DS_Store
+
+# Data files (will be downloaded during build)
+data/*.mmdb
+data/*.gz
